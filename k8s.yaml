@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: python-file-upload
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: python-file-upload
+  template:
+    metadata:
+      labels:
+        app: python-file-upload
+    spec:
+      containers:
+        - name: web
+          image: file-upload:latest   # build this image inside Minikube: `eval $(minikube docker-env)` then docker build -t file-upload:latest .
+          ports:
+            - containerPort: 5000
+          env:
+            - name: PORT
+              value: "5000"
+            - name: MAX_CONTENT_LENGTH
+              value: "52428800"  # 50 MB
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
+      volumes:
+        - name: uploads
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: python-file-upload-svc
+spec:
+  type: NodePort
+  selector:
+    app: python-file-upload
+  ports:
+    - port: 5000
+      targetPort: 5000
+      nodePort: 30080
